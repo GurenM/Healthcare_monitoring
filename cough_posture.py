@@ -152,34 +152,42 @@ def output(X_cough,u_posture,Wout_cough,Wout_posture):
 
     return Y_cough_output, Y_posture_output
 
-
+#load training data for cough detection
 df_train_cough1= pd.read_excel('/.../.xlsx')
 df_train_cough2 = pd.read_excel('/.../.xlsx')
 df_train_cough3 = pd.read_excel('/.../.xlsx')
 df_train_cough4 = pd.read_excel('/.../.xlsx')
 df_train_cough5 = pd.read_excel('/.../.xlsx')
+#load test data for cough detection
 df_test = pd.read_excel('/.../.xlsx')
 
+#Extract features
 u_train_cough1 = datamaking(df_train_cough1) 
 u_train_cough2 = datamaking(df_train_cough2) 
 u_train_cough3 = datamaking(df_train_cough3) 
 u_train_cough4 = datamaking(df_train_cough4) 
 u_train_cough5 = datamaking(df_train_cough5)
 
+#augmentation
 u_train_cough = trainmake(u_train_cough1,u_train_cough2,u_train_cough3,u_train_cough4,u_train_cough5)
 u_test_cough = datamaking(df_test)
 
+#load target label for training data of cough detection
 Yt_cough =  np.loadtxt('/.../.txt')
 Yt_cough = Yt_cough[1000:u_train_cough.shape[0]] #1000 is washout length
+
+#load target label for test data of cough detection
 Y_cough_test = np.loadtxt('/.../.txt')
 
-
+#load training data for posture detection
 df_train_posture1 = pd.read_excel('/.../.xlsx')
 df_train_posture2 = pd.read_excel('/.../.xlsx')
 
+#extract features
 u_train_posture1 = datamaking_posture(df_train_posture1)
 u_train_posture2 = datamaking_posture(df_train_posture2)
 
+#augmentation
 u_train_posture = np.vstack((u_train_posture1,u_train_posture2))
 u_test_posture = datamaking_posture(df_test)
 
@@ -189,7 +197,11 @@ u_test_posture = datamaking_posture(df_test)
 #Face left:2
 #Face right:3
 #Face down:4
+
+#load target label for training data of posture detection
 Yt_posture = np.loadtxt('/.../.txt')
+
+#load target label for test data of posture detection
 Y_posture_test = np.loadtxt('/.../.txt')
 
 
@@ -204,10 +216,14 @@ Input_magnitude_ESN2 = 1.5
 spectral_radius_ESN2 = 0.1
 leaking_rate_ESN2 = 0.1
 
+#ECG-drived Reservoir
 X1_train = ESN_train(u_train_cough[:,0],ResSize_ESN1,Input_magnitude_ESN1,spectral_radius_ESN1,leaking_rate_ESN1)
+
+#AccZ-drived Reservoir
 X2_train = ESN_train(u_train_cough[:,1],ResSize_ESN2,Input_magnitude_ESN2,spectral_radius_ESN2,leaking_rate_ESN2)
 X_train = np.vstack((X1_train,X2_train))
 
+#calculate Wout
 lr_cough = LogisticRegression(max_iter=10000)
 lr_cough.fit(X_train.T,Yt_cough)
 Wout_coef = lr_cough.coef_
@@ -220,7 +236,7 @@ for i in range(5+ResSize_ESN1+ResSize_ESN2):
     if i >0:
         Wout_cough[i,:] = Wout_coef[:,i-1] 
 
-
+#calculate Wout
 lr_posture = LogisticRegression(max_iter=10000)
 lr_posture.fit(u_train_posture,Yt_posture)
 Wout_coef = lr_posture.coef_
@@ -233,10 +249,13 @@ for i in range(4):
     if i >0:
         Wout_posture[i,:] = Wout_coef[:,i-1]  
 
+#ECG-drived Reservoir
 X1_test = ESN(u_test_cough[:,0],ResSize_ESN1,Input_magnitude_ESN1,spectral_radius_ESN1,leaking_rate_ESN1)
+#AccZ-drived Reservoir
 X2_test = ESN(u_test_cough[:,1],ResSize_ESN2,Input_magnitude_ESN2,spectral_radius_ESN2,leaking_rate_ESN2)
 X_test_cough = np.vstack((X1_test,X2_test))
 
+#output
 Y_cough_output,Y_posture_output = output(X_test_cough,u_test_posture,Wout_cough,Wout_posture)
 
 plt.figure(1).clear()

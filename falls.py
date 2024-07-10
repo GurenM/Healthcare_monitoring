@@ -88,14 +88,19 @@ def output(X,Wout):
     
     return Y1[:,1]
      
-
+#load trainig data
 df_train1=pd.read_excel('/.../.xlsx')
 df_train2 = pd.read_excel('/.../.xlsx')
+
+#load test data
 df_test = pd.read_excel('/.../.xlsx')
 
+#extract features
 u_train1 = datamaking(df_train1)
 u_train2 = datamaking(df_train2)
 u_test = datamaking(df_test)
+
+#augmentation
 u_train = trainmake(u_train1,u_train2)
 
 
@@ -106,10 +111,11 @@ leaking_rate = 0.3
 
 X_train = ESN_train(u_train,ResSize,Input_magnitude,spectral_radius,leaking_rate)
 
+#loat target label for training data
 Yt =np.loadtxt('/.../.xlsx')
 Yt = Yt[1000:len(u_train[:,0])]
 
-
+#calculate Wout
 lr1 = LogisticRegression(max_iter=10000)
 lr1.fit(X_train.T,Yt)
 Wout_coef = lr1.coef_
@@ -124,8 +130,11 @@ for i in range(3+ResSize):
         Wout[i,:] = Wout_coef[:,i-1] 
 
 X_test = ESN(u_test,ResSize,Input_magnitude,spectral_radius,leaking_rate)
+
+#load target label for test data
 Y_test =  np.loadtxt('/.../.xlsx')
 
+#output
 Y_output = output(X_test,Wout)
 
 plt.figure(1).clear()

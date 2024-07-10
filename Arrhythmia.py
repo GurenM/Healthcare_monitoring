@@ -193,14 +193,17 @@ def output(X,Wout):
 
     return Y1[:,1]
     
-df_train1 = pd.read_excel('/.../.txt')
-df_train2 = pd.read_excel('/.../.txt')
-df_test = pd.read_excel('/.../.txt')
+df_train1 = pd.read_excel('/.../.txt') #load training data of first subject
+df_train2 = pd.read_excel('/.../.txt') #load training data of second subject
+df_test = pd.read_excel('/.../.txt') #load test data
 
+#extracting features
 u_train1 = datamaking(df_train1)
 u_train2 = datamaking(df_train2)
 
+#augmentation
 u_train = trainmake(u_train1,u_train2)
+
 u_test = datamaking(df_test)
 
 ResSize = 30
@@ -208,11 +211,14 @@ Input_magnitude = 1.7
 spectral_radius = 0.1
 leaking_rate = 0.1
 
+#calculate thorugh reservoir layer
 X_train = ESN_train(u_train,ResSize,Input_magnitude,spectral_radius,leaking_rate)
 
+#load target label of training data
 Yt = np.loadtxt('/.../.txt')
 Yt = Yt[1000:len(u_train)]
 
+#calculate Wout
 lr = LogisticRegression(max_iter=10000)
 lr.fit(X_train.T,Yt)
 
@@ -226,9 +232,14 @@ for i in range(3+ResSize):
         Wout[i,:] = Wout_coef[:,i-1] 
 
 X_test = ESN(u_test,ResSize,Input_magnitude,spectral_radius,leaking_rate)
+
+#load taraget label of test data
 Y_test = np.loadtxt('/.../.txt')
 
+#output ESN result
 Y_ESN = output(X_test,Wout)
+
+#output conditional branch result
 Y_if = if_statement_detection(u_test)
 
 if len(Y_ESN)<=len(Y_if):
@@ -236,6 +247,7 @@ if len(Y_ESN)<=len(Y_if):
 else:
     testlength = len(Y_ESN)
 
+#take OR
 Y_output = OR(Y_ESN[:testlength],Y_if[:testlength])
 
 plt.figure(1).clear()
